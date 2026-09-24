@@ -48,7 +48,7 @@ Test this configuration with the following commands:
 
 ```bash
 # Apply the minimal overlay (1 tool only)
-kubectl apply -k overlays/minimal/
+kubectl apply --server-side -k overlays/minimal/
 
 # Verify ConfigMap was created
 kubectl get configmap aap-mcp-custom-config -n aap-operator
@@ -90,7 +90,7 @@ kubectl patch ansiblemcpserver aap-mcp-server -n aap-operator \
   --type=merge -p '{"spec":{"no_log":true}}'
 
 # Test restricted (read-only) overlay
-kubectl apply -k overlays/restricted-example/
+kubectl apply --server-side -k overlays/restricted-example/
 
 kubectl rollout status deployment/aap-mcp-server -n aap-operator
 
@@ -100,6 +100,48 @@ kubectl logs -n aap-operator deployment/aap-mcp-server --tail=50 | \
 # Clean up (revert to default)
 kubectl delete configmap aap-mcp-custom-config -n aap-operator
 kubectl rollout restart deployment/aap-mcp-server -n aap-operator
+```
+
+## Quick Start
+
+### Using kubectl with server-side apply
+
+The recommended method to apply this configuration:
+
+```bash
+# Apply the minimal overlay (1 tool only)
+kubectl apply --server-side -k overlays/minimal/
+
+# Restart the deployment to pick up the new configuration
+kubectl rollout restart deployment/aap-mcp-server -n aap-operator
+kubectl rollout status deployment/aap-mcp-server -n aap-operator
+
+# Or apply the restricted overlay (read-only operations)
+kubectl apply --server-side -k overlays/restricted-example/
+
+# Restart the deployment to pick up the new configuration
+kubectl rollout restart deployment/aap-mcp-server -n aap-operator
+kubectl rollout status deployment/aap-mcp-server -n aap-operator
+
+# Verify the configuration loaded
+kubectl logs -n aap-operator deployment/aap-mcp-server --tail=30 | grep -E "Toolsets:|job_management:|Total tools"
+```
+
+### Alternative: Manual application
+
+If server-side apply is not available:
+
+```bash
+# Apply only the ConfigMap
+kubectl kustomize overlays/restricted-example/ | kubectl apply -f -
+
+# Then manually patch the deployment
+kubectl patch deployment aap-mcp-server -n aap-operator \
+  --type=strategic --patch-file base/patch-deployment.yaml
+
+# Restart the deployment to pick up the new configuration
+kubectl rollout restart deployment/aap-mcp-server -n aap-operator
+kubectl rollout status deployment/aap-mcp-server -n aap-operator
 ```
 
 ## Overlays
@@ -148,7 +190,10 @@ patchesStrategicMerge:
 4. Apply your overlay:
 
 ```bash
-kubectl apply -k overlays/my-config/
+kubectl apply --server-side -k overlays/my-config/
+
+# Restart the deployment to pick up the new configuration
+kubectl rollout restart deployment/aap-mcp-server -n aap-operator
 ```
 
 ## Verification
