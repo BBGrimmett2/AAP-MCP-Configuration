@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aap-mcp-server
+  namespace: aap-operator
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"  # Patch after ConfigMap is created
+spec:
+  template:
+    spec:
+      volumes:
+        # Add custom config volume
+        - name: custom-mcp-config
+          configMap:
+            name: aap-mcp-custom-config
+            defaultMode: 420
+      containers:
+        - name: ansible-mcp-connect
+          volumeMounts:
+            # Mount custom config over the default /app/aap-mcp.yaml
+            - name: custom-mcp-config
+              mountPath: /app/aap-mcp.yaml
+              subPath: aap-mcp.yaml
+              readOnly: true

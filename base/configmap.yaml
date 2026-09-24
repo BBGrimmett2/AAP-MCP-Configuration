@@ -1,0 +1,306 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aap-mcp-custom-config
+  namespace: aap-operator
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"  # Create ConfigMap first
+  labels:
+    app.kubernetes.io/name: aap-mcp-server
+    app.kubernetes.io/component: configuration
+data:
+  aap-mcp.yaml: |
+    ---
+    # Custom AAP MCP Server Tool Configuration
+    # This configuration filters which MCP tools are available to AI assistants.
+    #
+    # To disable a tool: comment it out or remove it
+    # To enable a tool: uncomment it
+    #
+    # WARNING: This is not officially supported. See README.md for details.
+
+    # Configuration for HTTPS certificate validation
+    # ignore-certificate-errors: false
+
+    # Configuration for Prometheus metrics endpoint
+    # enable_metrics: true
+
+    # Configuration for base URL (defaults to https://localhost if not specified)
+    # Lower priority than BASE_URL environment variable
+    # base_url: "https://localhost:8443"
+
+    # Allow write operations (POST, DELETE, PATCH)
+    # This is typically set via the AnsibleMCPServer CR spec.allow_write_operations
+    # allow_write_operations: false
+
+    services:
+      - name: controller
+        local_path: data/controller-schema.json
+      - name: galaxy
+        local_path: data/galaxy-openapi.json
+      - name: gateway
+        local_path: data/gateway-schema.json
+      - name: eda
+        local_path: data/eda-openapi.json
+      - name: lightspeed
+        local_path: data/lightspeed.json
+
+    toolsets:
+      # ============================================================================
+      # JOB MANAGEMENT
+      # Tools for launching, monitoring, and managing Ansible job executions
+      # ============================================================================
+      job_management:
+        # Query job templates
+        - controller.job_templates_list
+        - controller.job_templates_retrieve
+        - controller.workflow_job_templates_list
+        - controller.workflow_job_templates_retrieve
+
+        # Launch jobs
+        - controller.job_templates_launch_retrieve
+        - controller.job_templates_launch_create
+        - controller.workflow_job_templates_launch_create
+
+        # Monitor job execution
+        - controller.jobs_list
+        - controller.jobs_retrieve
+        - controller.workflow_jobs_list
+        - controller.workflow_jobs_retrieve
+        - controller.jobs_stdout_retrieve
+        - controller.jobs_job_events_list
+        - controller.jobs_job_host_summaries_list
+        - controller.workflow_jobs_workflow_nodes_list
+
+        # Job control
+        - controller.jobs_cancel_create
+        - controller.workflow_jobs_cancel_create
+        - controller.jobs_relaunch_retrieve
+        - controller.jobs_relaunch_create
+        - controller.workflow_jobs_relaunch_create
+
+        # Ad-hoc commands
+        - controller.ad_hoc_commands_list
+        - controller.ad_hoc_commands_retrieve
+        - controller.ad_hoc_commands_create
+        - controller.ad_hoc_commands_stdout_retrieve
+        - controller.ad_hoc_commands_events_list
+        - controller.ad_hoc_commands_cancel_create
+        - controller.ad_hoc_commands_relaunch_create
+        - controller.ad_hoc_commands_relaunch_retrieve
+        - controller.hosts_ad_hoc_commands_create
+        - controller.inventories_ad_hoc_commands_create
+        - controller.groups_ad_hoc_commands_create
+
+        # Projects
+        - controller.projects_list
+        - controller.projects_create
+        - controller.projects_playbooks_retrieve
+
+        # Job templates (create/configure)
+        - controller.job_templates_create
+        - controller.schedules_create
+        - controller.job_templates_credentials_create
+        - controller.job_templates_credentials_list
+        - controller.job_templates_survey_spec_create
+        - controller.job_templates_notification_templates_started_create
+        - controller.job_templates_notification_templates_success_create
+        - controller.job_templates_notification_templates_error_create
+        - controller.unified_job_templates_list
+        - controller.workflow_job_template_nodes_credentials_list
+
+        # Metrics
+        - controller.analytics_retrieve
+        - controller.metrics_retrieve
+
+        # EDA activations
+        - eda.activation_instances_list
+        - eda.activation_instances_logs_list
+
+      # ============================================================================
+      # INVENTORY MANAGEMENT
+      # Tools for managing inventories, hosts, and groups
+      # ============================================================================
+      inventory_management:
+        # Inventories
+        - controller.inventories_list
+        - controller.inventories_create
+        - controller.inventories_inventory_sources_list
+
+        # Hosts
+        - controller.hosts_list
+        - controller.hosts_retrieve
+        - controller.hosts_create
+        - controller.hosts_variable_data_retrieve
+        - controller.hosts_ansible_facts_retrieve
+
+        # Groups
+        - controller.groups_list
+        - controller.groups_create
+
+        # Inventory sources
+        - controller.inventory_sources_list
+        - controller.inventory_sources_create
+        - controller.inventory_sources_update_create
+
+      # ============================================================================
+      # SYSTEM MONITORING
+      # Tools for monitoring cluster health, activity, and status
+      # ============================================================================
+      system_monitoring:
+        # Instance groups
+        - controller.instance_groups_list
+        - controller.instance_groups_create
+        - controller.instance_groups_retrieve
+        - controller.instances_create
+        - controller.instances_retrieve
+
+        # Mesh topology
+        - controller.mesh_visualizer_retrieve
+
+        # Activity streams
+        - gateway.activitystream_list
+        - gateway.activitystream_retrieve
+        - controller.activity_stream_list
+        - controller.activity_stream_retrieve
+
+        # Authentication
+        - gateway.authenticators_list
+
+        # Status
+        - gateway.status_retrieve
+        - gateway.feature_flags_state_retrieve
+
+      # ============================================================================
+      # USER MANAGEMENT
+      # Tools for managing users, teams, roles, and organizations
+      # WARNING: These are sensitive operations. Consider disabling in production.
+      # ============================================================================
+      user_management:
+        # Teams
+        - gateway.teams_list
+        - gateway.teams_retrieve
+        - gateway.teams_create
+        - gateway.teams_update
+        - gateway.teams_destroy  # CAUTION: Destructive operation
+        - gateway.teams_users_list
+
+        # Users
+        - gateway.users_list
+        - gateway.users_retrieve
+        - gateway.users_create    # CAUTION: Can create users
+        - gateway.users_update
+        - gateway.users_destroy   # CAUTION: Destructive operation
+        - gateway.users_teams_list
+        - controller.users_activity_stream_list
+
+        # Roles
+        - gateway.role_definitions_list
+        - gateway.role_team_assignments_list
+        - gateway.role_user_assignments_list
+        - gateway.role_user_assignments_create
+        - gateway.role_user_assignments_destroy  # CAUTION: Destructive operation
+
+        # Organizations
+        - gateway.organizations_list
+        - gateway.organizations_retrieve
+        - gateway.organizations_create
+        - gateway.organizations_update
+        - gateway.organizations_destroy  # CAUTION: Destructive operation
+
+        # Authentication
+        - gateway.authenticators_list
+        - gateway.authenticators_retrieve
+        - gateway.authenticators_create
+        - gateway.authenticators_update
+        - gateway.authenticators_destroy
+        - gateway.authenticator_maps_list
+        - gateway.authenticator_maps_create
+
+        # Current user
+        - gateway.me_list
+
+        # Activity
+        - gateway.activitystream_list
+        - controller.activity_stream_list
+
+      # ============================================================================
+      # SECURITY & COMPLIANCE
+      # Tools for managing credentials and security policies
+      # WARNING: These are highly sensitive operations.
+      # ============================================================================
+      security_compliance:
+        # Credentials (read)
+        - controller.credentials_list
+        - controller.credentials_retrieve
+        - controller.job_templates_credentials_list
+        - controller.credential_input_sources_list
+
+        # Credentials (write) - CAUTION: Highly sensitive
+        - controller.credentials_create
+        - controller.credentials_test_create
+        - controller.credentials_input_sources_create
+
+        # Credential types
+        - controller.credential_types_list
+        - controller.credential_types_create
+        - controller.credential_types_retrieve
+        - controller.credential_types_update
+        - controller.credential_types_destroy
+
+        # Jobs and activity (for audit)
+        - controller.jobs_list
+        - gateway.activitystream_list
+        - controller.activity_stream_list
+
+      # ============================================================================
+      # PLATFORM CONFIGURATION
+      # Tools for configuring AAP platform settings
+      # WARNING: Platform-level changes. Use with caution.
+      # ============================================================================
+      platform_configuration:
+        # Settings
+        - controller.settings_list
+        - controller.settings_retrieve
+        - controller.settings_partial_update  # CAUTION: Can change platform settings
+        - gateway.settings_list
+        - gateway.settings_getter
+        - gateway.settings_update  # CAUTION: Can change platform settings
+
+        # Configuration
+        - controller.config_retrieve
+        - controller.config_create
+
+        # Notifications
+        - controller.notification_templates_list
+        - controller.notification_templates_create
+        - controller.notification_templates_retrieve
+        - controller.notification_templates_update
+        - controller.notification_templates_destroy
+
+        # Execution environments
+        - controller.execution_environments_list
+        - controller.execution_environments_create
+        - controller.execution_environments_retrieve
+        - controller.execution_environments_update
+        - controller.execution_environments_destroy
+        - controller.organizations_execution_environments_create
+        - controller.organizations_instance_groups_create
+        - controller.organizations_galaxy_credentials_create
+
+      # ============================================================================
+      # AI ASSISTANT
+      # Tools for AAP Lightspeed AI integration
+      # ============================================================================
+      ai_assistant:
+        - lightspeed.ai_chat_create
+
+      # ============================================================================
+      # CONTENT DISCOVERY
+      # Tools for discovering Ansible content (collections, execution environments)
+      # ============================================================================
+      content_discovery:
+        - galaxy.ansible_content_collections_index
+        - galaxy.ansible_content_collections_index_versions_get_distro_base_pa
+        - galaxy.execution_environments_repositories_get_repositories
+        - lightspeed.aap_rag_search
