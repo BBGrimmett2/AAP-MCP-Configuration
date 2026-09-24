@@ -1,0 +1,14 @@
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.serena/
+
+# macOS
+.DS_Store
+
+# Test outputs
+test-output/
+*.log
