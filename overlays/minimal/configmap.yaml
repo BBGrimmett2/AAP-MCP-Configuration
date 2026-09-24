@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aap-mcp-custom-config
+  namespace: aap-operator
+data:
+  aap-mcp.yaml: |
+    ---
+    # Minimal AAP MCP Server Configuration
+    # Only 1 tool enabled for testing
+
+    services:
+      - name: controller
+        local_path: data/controller-schema.json
+      - name: galaxy
+        local_path: data/galaxy-openapi.json
+      - name: gateway
+        local_path: data/gateway-schema.json
+      - name: eda
+        local_path: data/eda-openapi.json
+      - name: lightspeed
+        local_path: data/lightspeed.json
+
+    toolsets:
+      job_management:
+        - controller.job_templates_launch_retrieve
