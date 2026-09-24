@@ -6,14 +6,16 @@ namespace: aap-operator
 resources:
   - configmap.yaml
 
-patchesStrategicMerge:
-  - patch-deployment.yaml
+patches:
+  - path: patch-deployment.yaml
+    target:
+      kind: Deployment
+      name: aap-mcp-server
 
-# Optional: Common labels for all resources
-commonLabels:
-  app.kubernetes.io/component: mcp-tool-filter
-  app.kubernetes.io/managed-by: kustomize
+labels:
+  - pairs:
+      app.kubernetes.io/component: mcp-tool-filter
+      app.kubernetes.io/managed-by: kustomize
 
-# Optional: Sync wave annotations for ArgoCD
 commonAnnotations:
   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true

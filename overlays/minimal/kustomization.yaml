@@ -3,8 +3,11 @@ kind: Kustomization
 
 namespace: aap-operator
 
-bases:
+resources:
   - ../../base
 
-patchesStrategicMerge:
-  - configmap.yaml
+patches:
+  - path: configmap.yaml
+    target:
+      kind: ConfigMap
+      name: aap-mcp-custom-config
